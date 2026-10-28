@@ -1,0 +1,74 @@
+@inherits LayoutComponentBase
+@inject DocumentProcessor.WebForms.Data.DatabaseInfo? DatabaseInfo
+
+<header class="app-bar">
+    <div class="app-brand">
+        <span class="app-brand-mark"><i class="bi bi-stars"></i></span>
+        <span>Document Processor</span>
+    </div>
+
+    <div class="app-bar-pills">
+        <span class="runtime-pill">
+            <i class="bi bi-cpu"></i>
+            @runtimePillText
+        </span>
+        <span class="@databasePillClass">
+            <i class="@databasePillIconClass"></i>
+            @databasePillText
+        </span>
+    </div>
+</header>
+
+<main class="app-main">
+    @Body
+</main>
+
+<footer class="app-footer">
+    Config: @credentialSourceText
+    <span class="app-footer-separator">&middot;</span>
+    Summaries stored in @providerNameText
+</footer>
+
+@* PORT-TODO *@
+@* {"note": "TitleContent placeholder was a head-level ContentPlaceHolder for <title>. Pages that need a custom title should use <PageTitle>...</PageTitle> instead.", "was": "asp:ContentPlaceHolder#TitleContent"} *@
+
+@code {
+    private string runtimePillText = string.Empty;
+    private string databasePillText = string.Empty;
+    private string credentialSourceText = string.Empty;
+    private string providerNameText = string.Empty;
+    private string databasePillClass = "db-pill";
+    private string databasePillIconClass = "bi bi-database";
+
+    protected override void OnInitialized()
+    {
+        runtimePillText = FrameworkName();
+
+        if (DatabaseInfo is null)
+        {
+            databasePillText = "Database not resolved";
+            credentialSourceText = "unavailable";
+            providerNameText = "no database";
+            return;
+        }
+
+        var isPostgres = DatabaseInfo.Provider == DocumentProcessor.WebForms.Data.DatabaseProvider.PostgreSql;
+
+        databasePillClass = isPostgres ? "db-pill db-pill-postgres" : "db-pill";
+        databasePillIconClass = isPostgres ? "bi bi-rocket-takeoff-fill" : "bi bi-database";
+
+        databasePillText = DatabaseInfo.DisplayName + " \u00b7 " + DatabaseInfo.LocationLabel;
+        credentialSourceText = DatabaseInfo.CredentialSource;
+        providerNameText = DatabaseInfo.DisplayName;
+    }
+
+    /// <summary>The framework the app was compiled for, e.g. ".NET 10.0".</summary>
+    private static string FrameworkName()
+    {
+        var target = typeof(DocumentProcessor.WebForms.Components.Layout.MainLayout).Assembly
+            .GetCustomAttribute<System.Runtime.Versioning.TargetFrameworkAttribute>();
+        return target is not null && !string.IsNullOrEmpty(target.FrameworkDisplayName)
+            ? target.FrameworkDisplayName
+            : ".NET";
+    }
+}
